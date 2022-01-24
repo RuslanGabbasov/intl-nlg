@@ -51,6 +51,11 @@
   resolved "https://registry.yarnpkg.com/@types/russian-nouns-js/-/russian-nouns-js-1.2.1.tgz#8283441b200474b21947be4005f2ef177042d8e2"
   integrity sha512-nJ2Sn4Get9HxYz7mC5veSRUFuHSAruNdBVIJka5CVbXT48HYiCc5w1X61PI4URLNNLf2Cmc79eqh6LDH+E2SRg==
 
+"@vicimpa/rubles@^0.0.5":
+  version "0.0.5"
+  resolved "https://registry.yarnpkg.com/@vicimpa/rubles/-/rubles-0.0.5.tgz#0ff78d832b31d3e395485bffa8217ca439a80f23"
+  integrity sha512-IiZelebHzojK1v/pI+R0RVIuJm0I+QRH7uxbTUlPLoT6sln7hl42DpLd6S8D6hSpW6KLvWpt7DwmLmZZxb1e3w==
+
 intl-messageformat@^9.11.2:
   version "9.11.2"
   resolved "https://registry.yarnpkg.com/intl-messageformat/-/intl-messageformat-9.11.2.tgz#b94b1c5bcfff9de63017ffe2fb787a16a28967df"

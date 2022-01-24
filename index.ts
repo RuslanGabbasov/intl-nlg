@@ -1,5 +1,6 @@
 import IntlMessageFormat from "intl-messageformat";
 import RussianNouns from 'russian-nouns-js';
+import { Rubles } from "@vicimpa/rubles";
 import typo from 'ru-typo';
 import './arrays';
 
@@ -50,7 +51,13 @@ interface DeclineOptions extends Options {
 }
 
 interface EnumOptions extends Options {
-  last: string
+  last: string;
+}
+
+interface NumwordsOptions extends Options {
+  format: string;
+  gender: Genders;
+  case: Cases;
 }
 
 interface MixOptions extends Options {
@@ -59,7 +66,7 @@ interface MixOptions extends Options {
 
 const extract = <T extends Options>(content: Array<any>, defaultOpts?: T): {values: Array<string>, opts: T} => {
   NLG_DEBUG && console.log("extract", content);
-  const opts: T = {sep: " ", ...content.find?.call(content, c => c.opts)?.opts || defaultOpts};
+  const opts: T = {sep: " ", ...defaultOpts, ...content.find?.call(content, c => c.opts)?.opts};
   const values: Array<string> = Array.isArray(content)
     ? content.map(c => c.v
       ? (typeof c.v === "string") ? c.v.split(opts.sep) : c.v
@@ -110,7 +117,15 @@ const nlg = {
   decline: (content: Array<any>) => {
     NLG_DEBUG && console.log("decline", content)
     const {values, opts} = extract<DeclineOptions>(content, {sep: " ", gender: RussianNouns.Gender.MASCULINE, case: RussianNouns.Case.NOMINATIVE})
-    return values.map(token => rne.decline(RussianNouns.createLemma({text: token, gender: opts.gender}), opts.case)).flat().join(opts.sep)
+    return values.map(token =>
+      rne.decline(RussianNouns.createLemma({text: token, gender: opts.gender}), opts.case)).flat().join(opts.sep)
+  },
+
+  numwords: (content: Array<any>) => {
+    NLG_DEBUG && console.log("numwords", content)
+    const {values, opts} = extract<NumwordsOptions>(content, {format: "$string", sep: " ", gender: RussianNouns.Gender.MASCULINE, case: RussianNouns.Case.NOMINATIVE});
+    return values.map(token =>
+      rne.decline(RussianNouns.createLemma({text: Rubles.format(+token, opts.format), gender: opts.gender}), opts.case)).flat().join(opts.sep);
   },
 
   mix: (content: Array<any>) => {
@@ -121,7 +136,7 @@ const nlg = {
 }
 
 console.log(new IntlMessageFormat(
-  `<typo><mix><plural>Привет</plural> от "<decline>{f5}</decline>" <plural>нож</plural> старых - <enum><plural>{f4}</plural></enum> и штиблет <syn>разные варианты {f1}</syn>
+  `<typo><mix><numwords>{f7}</numwords> <plural>Привет</plural> от "<decline>{f5}</decline>" <plural>нож</plural> старых - <enum><plural>{f4}</plural></enum> и штиблет <syn>разные варианты {f1}</syn>
  <enum>{f2}</enum> или <enum>{f3}</enum>. Второе предложение <select>{f6}</select>. Третье предложение.</mix></typo>`,
   "ru-RU").format(
       {
@@ -131,4 +146,5 @@ console.log(new IntlMessageFormat(
         f4: {v: ["лошадь", "корова", "птица"], opts: {gender: RussianNouns.Gender.FEMININE}},
         f5: {v: "Локомотив", opts: {gender: RussianNouns.Gender.MASCULINE, case: RussianNouns.Case.INSTRUMENTAL}},
         f6: {v: ["ехал", "ехала", "ехали"], opts: {pos: 2}},
+        f7: {v: 15, opts: {gender: RussianNouns.Gender.FEMININE, case: RussianNouns.Case.DATIVE }},
         ...nlg}))
