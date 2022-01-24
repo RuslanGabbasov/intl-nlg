@@ -5,14 +5,15 @@ export {};
 declare global {
   interface Array<T> {
     last(): T;
-    random(): T;
+    random(seed?: string): T;
     groupBy(property: string): Map<any, T[]>;
     shake(seed?: string): T[];
-}
+  }
 }
 
-Array.prototype.random = function (): any {
-  return this[Math.floor(Math.random()*this.length)]
+Array.prototype.random = function (seed?: string): any {
+  const random = seed ? xmur3(seed) : Math.random;
+  return this[Math.floor(random() * this.length)]
 };
 
 Array.prototype.last = function (): any {
