@@ -12,12 +12,16 @@
   "dependencies": {
     "@vicimpa/rubles": "^0.0.5",
     "intl-messageformat": "^9.11.2",
+    "irregular": "^0.1.1",
+    "irregular-plurals": "^3.3.0",
+    "number-to-words": "^1.2.4",
     "ru-typo": "^3.1.0",
     "russian-nouns-js": "^1.3.1",
     "typescript": "^4.5.5"
   },
   "devDependencies": {
     "@types/node": "^17.0.10",
+    "@types/number-to-words": "^1.2.1",
     "@types/russian-nouns-js": "^1.2.1"
   }
 }

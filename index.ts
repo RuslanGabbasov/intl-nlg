@@ -3,7 +3,8 @@ import RussianNouns from 'russian-nouns-js';
 import { Rubles } from "@vicimpa/rubles";
 import typo from 'ru-typo';
 import './arrays';
-
+import {decline, EnglishNouns, EnglishNounsCases, plurEn} from "./plurEn";
+import converter from 'number-to-words';
 
 const rne = new RussianNouns.Engine();
 
@@ -50,6 +51,10 @@ interface DeclineOptions extends Options {
   case: Cases;
 }
 
+interface EnDeclineOptions extends Options {
+  form: EnglishNounsCases;
+}
+
 interface EnumOptions extends Options {
   last: string;
 }
@@ -58,6 +63,10 @@ interface NumwordsOptions extends Options {
   format: string;
   gender: Genders;
   case: Cases;
+}
+
+interface EnNumwordsOptions extends Options {
+  form: 'ordinal' | 'words' | 'words-ordinal';
 }
 
 interface MixOptions extends Options {
@@ -108,6 +117,16 @@ const nlg = {
       : content;
   },
 
+  mix: function mix(content: Array<any>) {
+    NLG_DEBUG && console.log("mix", content)
+    const {values, opts} = extract<MixOptions>(content, {sep: "."});
+    return values.shake(opts.seed || "" + Math.random()).join(`${opts.sep} `) + opts.sep;
+  },
+}
+
+const nlgRu = {
+  ...nlg,
+
   plural: (content: Array<any>) => {
     NLG_DEBUG && console.log("plural", content);
     const {values, opts} = extract<PluralOptions>(content, {sep: " ", gender: RussianNouns.Gender.MASCULINE});
@@ -127,11 +146,44 @@ const nlg = {
     return values.map(token =>
       rne.decline(RussianNouns.createLemma({text: Rubles.format(+token, opts.format), gender: opts.gender}), opts.case)).flat().join(opts.sep);
   },
+}
 
-  mix: (content: Array<any>) => {
-    NLG_DEBUG && console.log("mix", content)
-    const {values, opts} = extract<MixOptions>(content, {sep: "."});
-    return values.shake(opts.seed || "" + Math.random()).join(`${opts.sep} `) + opts.sep;
+const nlgEn = {
+  ...nlg,
+  typo: (content: Array<any>) => {
+    NLG_DEBUG && console.log("typo", content);
+    const {values, opts} = extract(content);
+    return typo(values.join(opts.sep));
+  },
+
+  enum: (content: Array<any>) => {
+    NLG_DEBUG && console.log("enum", content);
+    const {values, opts} = extract<EnumOptions>(content, {sep: ",", last: "and"});
+    return values
+      ? opts.last
+        ? `${values.slice(0, values.length - 1).join(`${opts.sep} `)} ${opts.last} ${values.reverse()[0]}`
+        : values.join(`${opts.sep} `)
+      : content;
+  },
+
+  plural: (content: Array<any>) => {
+    NLG_DEBUG && console.log("plural", content);
+    const {values, opts} = extract<Options>(content, {sep: " "})
+    return values.map(token => plurEn(token)).join(opts.sep)
+  },
+
+  decline: (content: Array<any>) => {
+    NLG_DEBUG && console.log("decline", content)
+    const {values, opts} = extract<EnDeclineOptions>(content, {sep: " ", form: EnglishNouns.Case.PastSimple})
+    return values.map(token => decline(token, opts.form)).join(opts.sep)
+  },
+
+  numwords: (content: Array<any>) => {
+    NLG_DEBUG && console.log("numwords", content)
+    const {values, opts} = extract<EnNumwordsOptions>(content, {sep: " ", form: "words"})
+    return values.map(token => opts.form === "words"
+      ? converter.toWords(token) : opts.form === "words-ordinal"
+        ? converter.toWordsOrdinal(token) : converter.toOrdinal(token)).join(opts.sep)
   },
 }
 
@@ -147,4 +199,17 @@ console.log(new IntlMessageFormat(
         f5: {v: "Локомотив", opts: {gender: RussianNouns.Gender.MASCULINE, case: RussianNouns.Case.INSTRUMENTAL}},
         f6: {v: ["ехал", "ехала", "ехали"], opts: {pos: 2}},
         f7: {v: 15, opts: {gender: RussianNouns.Gender.FEMININE, case: RussianNouns.Case.DATIVE }},
-        ...nlg}))
+        ...nlgRu}))
+
+console.log(new IntlMessageFormat(
+  `<typo><mix><numwords>{f7}</numwords> <plural>Hello</plural> from "<decline>{f5}</decline>" <plural>knife</plural> old - <enum><plural>{f4}</plural></enum> and shoes <syn>different cases {f1}</syn>
+ <enum>{f2}</enum> or <enum>{f3}</enum>. Second sentence <select>{f6}</select>. Third sentence.</mix></typo>`, "en-US").format(
+  {
+    f1: {v: ["cheese", "meat", "sausage"], opts: {sep: ' '}},
+    f2: "Spartak CSKA",
+    f3: {v: ["Spartak", "CSKA", "Barcelona"], opts: {sep: ",", last: "и"}},
+    f4: {v: ["horse", "cow", "bird"], opts: {gender: RussianNouns.Gender.FEMININE}},
+    f5: {v: "Lokomotive", opts: {gender: RussianNouns.Gender.MASCULINE, case: RussianNouns.Case.INSTRUMENTAL}},
+    f6: {v: ["go", "goes", "go"], opts: {pos: 1}},
+    f7: {v: 15, opts: {gender: RussianNouns.Gender.FEMININE, case: RussianNouns.Case.DATIVE }},
+    ...nlgEn}))
